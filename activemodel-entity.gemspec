@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "lib/activemodel/entity/version"
+require_relative "lib/active_model/entity/version"
 
 Gem::Specification.new do |spec|
   spec.name = "activemodel-entity"
