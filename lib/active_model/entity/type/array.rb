@@ -39,6 +39,11 @@ module ActiveModel
           raise NotImplementedError
         end
 
+        def serialize(value)
+          return nil if value.nil?
+          value.map { element_type.serialize(_1) }
+        end
+
         private
 
         def element_type

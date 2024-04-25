@@ -5,7 +5,7 @@ require "active_model"
 require_relative "entity/version"
 require_relative "entity/type"
 require_relative "entity/parsers/json"
-
+require_relative "entity/serializers/json"
 
 module ActiveModel
   module Entity
@@ -16,6 +16,7 @@ module ActiveModel
       include ActiveModel::Serializers::JSON
       include ActiveModel::API
       include ActiveModel::Entity::Parsers::JSON
+      include ActiveModel::Entity::Serializers::JSON
     end
   end
 end

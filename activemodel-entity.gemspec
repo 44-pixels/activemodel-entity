@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/44-pixels/activemodel-entity"
 
-  spec.require_paths = Dir["LICENSE.txt", "README.md", "lib/**/*"]
+  spec.require_paths = Dir["LICENSE.txt", "README.md", "lib"]
 
   # Uncomment to register a new dependency of your gem
   spec.add_dependency "activesupport", ">= 7"

@@ -36,6 +36,11 @@ module ActiveModel
           raise NotImplementedError
         end
 
+        def serialize(value)
+          return nil if value.nil?
+          klass.represent(value)
+        end
+
         private
 
         def klass
