@@ -28,6 +28,7 @@ module ActiveModel
         attr_reader :element_type_name
 
         def initialize(of: nil)
+          super()
           @element_type_name = of
         end
 
@@ -41,20 +42,19 @@ module ActiveModel
 
         def serialize(value)
           return nil if value.nil?
+
           value.map { element_type.serialize(_1) }
         end
 
-        private
-
         def element_type
-          @element_type ||= begin
-            if element_type_name.is_a?(String)
-              ::ActiveModel::Entity::Type::Entity.new(class_name: element_type_name)
-            else
-              ::ActiveModel::Type.lookup(element_type_name)
-            end
-          end
+          @element_type ||= if element_type_name.is_a?(String)
+                              ::ActiveModel::Entity::Type::Entity.new(class_name: element_type_name)
+                            else
+                              ::ActiveModel::Type.lookup(element_type_name)
+                            end
         end
+
+        private
 
         def cast_value(value)
           return nil if value.nil?

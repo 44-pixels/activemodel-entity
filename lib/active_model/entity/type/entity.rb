@@ -25,6 +25,7 @@ module ActiveModel
         attr_reader :class_name
 
         def initialize(class_name: nil)
+          super()
           @class_name = class_name
         end
 
@@ -38,19 +39,20 @@ module ActiveModel
 
         def serialize(value)
           return nil if value.nil?
-          klass.represent(value)
+
+          entity_type.represent(value)
+        end
+
+        def entity_type
+          @entity_type ||= class_name.constantize
         end
 
         private
 
-        def klass
-          @klass ||= class_name.constantize
-        end
-
         def cast_value(value)
           return nil if value.nil?
-          return value if value.is_a?(klass)
-          return klass.from_json(value) if value.is_a?(Hash)
+          return value if value.is_a?(entity_type)
+          return entity_type.from_json(value) if value.is_a?(Hash)
 
           raise NotImplementedError
         end

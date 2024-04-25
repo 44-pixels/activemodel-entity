@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'active_model/entity'
+require "active_model/entity"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
