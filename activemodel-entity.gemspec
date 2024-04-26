@@ -22,5 +22,6 @@ Gem::Specification.new do |spec|
   # Uncomment to register a new dependency of your gem
   spec.add_dependency "activemodel", ">= 7"
   spec.add_dependency "activesupport", ">= 7"
+  spec.add_dependency "actionpack", ">= 7"
   spec.metadata["rubygems_mfa_required"] = "true"
 end

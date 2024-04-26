@@ -53,6 +53,7 @@ module ActiveModel
           return nil if value.nil?
           return value if value.is_a?(entity_type)
           return entity_type.from_json(value) if value.is_a?(Hash)
+          return entity_type.from_json(value) if value.is_a?(ActionController::Parameters)
 
           raise NotImplementedError
         end

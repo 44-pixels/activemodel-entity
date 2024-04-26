@@ -2,6 +2,7 @@
 
 require "active_support/all"
 require "active_model"
+require "action_controller/metal/strong_parameters"
 
 require_relative "entity/version"
 require_relative "entity/type"

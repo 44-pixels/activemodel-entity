@@ -67,4 +67,15 @@ RSpec.describe ActiveModel::Entity::Type::Entity do
       expect(person.role.name).to eq("user")
     end
   end
+
+  context "constructing from ActionController::Parameters" do
+    it "parses itself from json" do
+      person = EntityTest::Person.from_json(ActionController::Parameters.new({ age: 137, role: { name: "user" } }))
+
+      expect(person).to be_instance_of(EntityTest::Person)
+      expect(person.age).to eq(137)
+      expect(person.role).to be_instance_of(EntityTest::Role)
+      expect(person.role.name).to eq("user")
+    end
+  end
 end
