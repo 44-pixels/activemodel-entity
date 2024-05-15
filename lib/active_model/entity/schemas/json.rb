@@ -27,11 +27,12 @@ module ActiveModel
           end
 
           def json_schema_attribute_for(type)
+            return { type: :object } if type.type.nil?
             return { type: :number } if NUMBER_TYPES.include?(type.type)
             return { type: :string } if STRING_TYPES.include?(type.type)
             return { type: :boolean } if BOOLEAN_TYPES.include?(type.type)
             return { "$ref": type.entity_type.json_schema_ref } if type.is_a?(Type::Entity)
-            return { items: json_schema_attribute_for(type.element_type) } if type.is_a?(Type::Array)
+            return { items: json_schema_attribute_for(type.element_type), type: :array } if type.is_a?(Type::Array)
 
             raise NotImplementedError
           end
