@@ -23,6 +23,7 @@ module SchemasTest
     attribute :field_role, :entity, class_name: "SchemasTest::Role"
     attribute :field_roles, :array, of: "SchemasTest::Role"
     attribute :field_integers, :array, of: :integer
+    attribute :field_without_type
 
     validates :field_boolean, presence: true
     validates :field_float, presence: true
@@ -43,7 +44,8 @@ RSpec.describe ActiveModel::Entity::Schemas::JSON do
                                          "fieldString" => { type: :string },
                                          "fieldTime" => { type: :string },
                                          "fieldRole" => { :$ref => "#/components/schemas/SchemasTest.Role" },
-                                         "fieldRoles" => { items: { :$ref => "#/components/schemas/SchemasTest.Role" } },
-                                         "fieldIntegers" => { items: { type: :number } } } })
+                                         "fieldRoles" => { items: { :$ref => "#/components/schemas/SchemasTest.Role" }, type: :array },
+                                         "fieldIntegers" => { items: { type: :number }, type: :array },
+                                         "fieldWithoutType" => { type: :object } } })
   end
 end
