@@ -1,6 +1,7 @@
 AllCops:
   TargetRubyVersion: 3.2.0
   NewCops: enable
+  SuggestExtensions: false
 
 Style/StringLiterals:
   Enabled: true
@@ -20,3 +21,12 @@ Metrics/BlockLength:
 Style/OpenStructUse:
   Exclude:
     - spec/**/*
+
+Layout/FirstHashElementIndentation:
+  EnforcedStyle: consistent
+
+Layout/FirstArrayElementIndentation:
+  EnforcedStyle: consistent
+
+Metrics/AbcSize:
+  Enabled: false

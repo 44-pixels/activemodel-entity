@@ -23,6 +23,13 @@ module ActiveModel
 
           def required_attributes
             presence_validators = validators.group_by(&:class)[ActiveModel::Validations::PresenceValidator].to_a
+            presence_validators = presence_validators.reject { _1.options[:allow_nil] }
+            presence_validators.flat_map(&:attributes).to_a
+          end
+
+          def nullable_attributes
+            presence_validators = validators.group_by(&:class)[ActiveModel::Validations::PresenceValidator].to_a
+            presence_validators = presence_validators.select { _1.options[:allow_nil] }
             presence_validators.flat_map(&:attributes).to_a
           end
 
@@ -37,12 +44,22 @@ module ActiveModel
             raise NotImplementedError
           end
 
+          def make_schema_nullable!(options)
+            options[:type] = [options[:type], :null] if options[:type]
+            options[:nullable] = true if options[:$ref]
+          end
+
           def as_json_schema
             type = :object
             required = required_attributes.map(&:name).map { _1.camelize(:lower) }
+            nullable = nullable_attributes.map(&:name).index_by { _1.camelize(:lower) }
 
             attributes = attribute_types.transform_keys { _1.camelize(:lower) }
             properties = attributes.transform_values { json_schema_attribute_for(_1) }
+
+            properties.each do |name, options|
+              make_schema_nullable!(options) if nullable.key?(name)
+            end
 
             { type:, required:, properties: }
           end
