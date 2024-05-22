@@ -56,7 +56,7 @@ module ActiveModel
 
           def as_json_schema
             type = :object
-            description = (meta_descriptions[nil] || []).first
+            description = meta_descriptions[nil].first
             required = required_attributes.map(&:name).map { _1.camelize(:lower) }
             nullable = nullable_attributes.map(&:name).index_by { _1.camelize(:lower) }
 
@@ -68,7 +68,7 @@ module ActiveModel
               append_description_if_available!(name, options)
             end
 
-            { type:, description:, required:, properties: }.reject { _2.nil? }
+            { type:, description:, required:, properties: }.compact
           end
         end
       end

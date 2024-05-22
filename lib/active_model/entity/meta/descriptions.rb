@@ -8,7 +8,7 @@ module ActiveModel
         extend ActiveSupport::Concern
 
         included do
-          class_attribute :meta_descriptions, default: {}
+          class_attribute :meta_descriptions, default: { nil => [] }
         end
 
         # Class-level methods.
@@ -16,13 +16,12 @@ module ActiveModel
           # Specifies the description for the next defined attribute.
           # If the call to ::desc is followed by another call, the first one becomes class description.
           def desc(comment)
-            meta_descriptions[nil] ||= []
             meta_descriptions[nil] << comment
           end
 
           # Intercepts calls to ::attribute method updating meta_descriptions dictionary.
           def attribute(name, ...)
-            pending_comments = meta_descriptions[nil] || []
+            pending_comments = meta_descriptions[nil]
             last_comment = pending_comments.pop
 
             meta_descriptions[name.to_sym] = last_comment if last_comment
