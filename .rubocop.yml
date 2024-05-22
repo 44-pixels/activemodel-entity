@@ -30,3 +30,6 @@ Layout/FirstArrayElementIndentation:
 
 Metrics/AbcSize:
   Enabled: false
+
+Metrics/MethodLength:
+  Max: 16
