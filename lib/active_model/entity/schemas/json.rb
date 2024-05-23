@@ -49,8 +49,14 @@ module ActiveModel
             options[:nullable] = true if options[:$ref]
           end
 
+          def append_description_if_available!(name, options)
+            key = name.underscore.to_sym
+            options[:description] = meta_descriptions[key] if meta_descriptions.key?(key)
+          end
+
           def as_json_schema
             type = :object
+            description = meta_descriptions[nil].first
             required = required_attributes.map(&:name).map { _1.camelize(:lower) }
             nullable = nullable_attributes.map(&:name).index_by { _1.camelize(:lower) }
 
@@ -59,9 +65,10 @@ module ActiveModel
 
             properties.each do |name, options|
               make_schema_nullable!(options) if nullable.key?(name)
+              append_description_if_available!(name, options)
             end
 
-            { type:, required:, properties: }
+            { type:, description:, required:, properties: }.compact
           end
         end
       end
