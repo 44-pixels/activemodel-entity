@@ -33,6 +33,17 @@ module ActiveModel
             presence_validators.flat_map(&:attributes).to_a
           end
 
+          def enum_attributes
+            inclusion_validators = validators.group_by(&:class)[ActiveModel::Validations::InclusionValidator].to_a
+            inclusion_validators.select { _1.options[:in] }
+
+            inclusion_validators.each_with_object({}) do |validator, result|
+              validator.attributes.each do |name|
+                result[name.to_s] = validator.options[:in]
+              end
+            end
+          end
+
           def json_schema_attribute_for(type)
             return { type: :object } if type.type.nil?
             return { type: :number } if NUMBER_TYPES.include?(type.type)
@@ -54,6 +65,10 @@ module ActiveModel
             options[:description] = meta_descriptions[key] if meta_descriptions.key?(key)
           end
 
+          def append_enum!(values, options)
+            options[:enum] = values
+          end
+
           def as_json_schema
             type = :object
             description = meta_descriptions[nil].first
@@ -62,10 +77,12 @@ module ActiveModel
 
             attributes = attribute_types.transform_keys { _1.camelize(:lower) }
             properties = attributes.transform_values { json_schema_attribute_for(_1) }
+            enums = enum_attributes.transform_keys { _1.camelize(:lower) }
 
             properties.each do |name, options|
               make_schema_nullable!(options) if nullable.key?(name)
               append_description_if_available!(name, options)
+              append_enum!(enums[name], options) if enums.key?(name)
             end
 
             { type:, description:, required:, properties: }.compact
