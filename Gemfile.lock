@@ -133,6 +133,7 @@ PLATFORMS
 DEPENDENCIES
   activemodel-entity!
   rake (~> 13.0)
+  rexml (>= 3.2.8)
   rspec (~> 3.0)
   rubocop (~> 1.21)
 
