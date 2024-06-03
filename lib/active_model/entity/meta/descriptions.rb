@@ -13,6 +13,14 @@ module ActiveModel
 
         # Class-level methods.
         module ClassMethods
+          # Handle inheritance by clonning meta_descriptions value
+          def inherited(subclass)
+            super
+
+            subclass.meta_descriptions = meta_descriptions.dup
+            subclass.meta_descriptions[nil] = []
+          end
+
           # Specifies the description for the next defined attribute.
           # If the call to ::desc is followed by another call, the first one becomes class description.
           def desc(comment)
