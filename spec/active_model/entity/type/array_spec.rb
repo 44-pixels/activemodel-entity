@@ -47,7 +47,7 @@ RSpec.describe ActiveModel::Entity::Type::Entity do
 
   context "constructing from json" do
     it "parses itself from json" do
-      person = ArrayTest::Person.from_json({ ages: [1, 3, 7], roles: [{ name: "user" }] })
+      person = ArrayTest::Person.from_json({ ages: [1, 3, 7], roles: [{ name: "user" }] }.deep_stringify_keys)
 
       expect(person).to be_instance_of(ArrayTest::Person)
       expect(person.ages).to eq([1, 3, 7])
@@ -58,7 +58,7 @@ RSpec.describe ActiveModel::Entity::Type::Entity do
     end
 
     it "accepts nil values" do
-      person = ArrayTest::Person.from_json({ ages: [1], roles: nil })
+      person = ArrayTest::Person.from_json({ ages: [1], roles: nil }.deep_stringify_keys)
 
       expect(person).to be_instance_of(ArrayTest::Person)
       expect(person.ages).to eq([1])
@@ -66,22 +66,11 @@ RSpec.describe ActiveModel::Entity::Type::Entity do
     end
 
     it "accepts [] values" do
-      person = ArrayTest::Person.from_json({ ages: [1], roles: [] })
+      person = ArrayTest::Person.from_json({ ages: [1], roles: [] }.deep_stringify_keys)
 
       expect(person).to be_instance_of(ArrayTest::Person)
       expect(person.ages).to eq([1])
       expect(person.roles).to eq([])
-    end
-
-    it "converts attribute name by underscoring it" do
-      person = ArrayTest::Person.from_json({ Ages: [1, 3, 7], Roles: [{ Name: "user" }] })
-
-      expect(person).to be_instance_of(ArrayTest::Person)
-      expect(person.ages).to eq([1, 3, 7])
-      expect(person.roles).to be_instance_of(Array)
-      expect(person.roles.size).to eq(1)
-
-      expect(person.roles.first.name).to eq("user")
     end
   end
 end

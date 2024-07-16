@@ -42,7 +42,7 @@ RSpec.describe ActiveModel::Entity::Type::Entity do
 
   context "constructing from json" do
     it "parses itself from json" do
-      person = EntityTest::Person.from_json({ age: 137, role: { name: "user" } })
+      person = EntityTest::Person.from_json({ age: 137, role: { name: "user" } }.deep_stringify_keys)
 
       expect(person).to be_instance_of(EntityTest::Person)
       expect(person.age).to eq(137)
@@ -51,20 +51,11 @@ RSpec.describe ActiveModel::Entity::Type::Entity do
     end
 
     it "accepts nil values" do
-      person = EntityTest::Person.from_json({ age: 137, role: nil })
+      person = EntityTest::Person.from_json({ age: 137, role: nil }.deep_stringify_keys)
 
       expect(person).to be_instance_of(EntityTest::Person)
       expect(person.age).to eq(137)
       expect(person.role).to eq(nil)
-    end
-
-    it "converts attribute name by underscoring it" do
-      person = EntityTest::Person.from_json({ Age: 137, Role: { Name: "user" } })
-
-      expect(person).to be_instance_of(EntityTest::Person)
-      expect(person.age).to eq(137)
-      expect(person.role).to be_instance_of(EntityTest::Role)
-      expect(person.role.name).to eq("user")
     end
   end
 

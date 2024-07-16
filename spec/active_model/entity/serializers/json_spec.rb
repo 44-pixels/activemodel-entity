@@ -124,7 +124,7 @@ RSpec.describe ActiveModel::Entity::Serializers::JSON do
     end
 
     it "loads object" do
-      person = SerializersTest::Person.from_json(source)
+      person = SerializersTest::Person.from_json(source.deep_stringify_keys)
 
       expect(person).to be_valid
       expect(person.as_json.deep_symbolize_keys).to eq({
