@@ -47,13 +47,22 @@ module ActiveModel
           @entity_type ||= class_name.constantize
         end
 
+        def cast_json(value)
+          return nil if value.nil?
+          return value if value.is_a?(entity_type)
+          return entity_type.from_json(value) if value.is_a?(Hash)
+          return entity_type.from_json(value) if value.is_a?(ActionController::Parameters)
+
+          raise NotImplementedError
+        end
+
         private
 
         def cast_value(value)
           return nil if value.nil?
           return value if value.is_a?(entity_type)
-          return entity_type.from_json(value) if value.is_a?(Hash)
-          return entity_type.from_json(value) if value.is_a?(ActionController::Parameters)
+          return entity_type.new(value) if value.is_a?(Hash)
+          return entity_type.new(value) if value.is_a?(ActionController::Parameters)
 
           raise NotImplementedError
         end
