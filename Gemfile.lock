@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    activemodel-entity (0.4.3)
+    activemodel-entity (0.5.0)
       actionpack (>= 7)
       activemodel (>= 7)
       activesupport (>= 7)
