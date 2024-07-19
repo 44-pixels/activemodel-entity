@@ -4,6 +4,7 @@ module EntityTest
   class Role
     include ActiveModel::Entity
     attribute :name, :string
+    attribute :last_name, :string
   end
 
   class Person
@@ -22,6 +23,7 @@ RSpec.describe ActiveModel::Entity::Type::Entity do
     before do
       person.age = 18
       role.name = "admin"
+      role.last_name = "admin"
 
       person.role = role
     end
@@ -31,51 +33,50 @@ RSpec.describe ActiveModel::Entity::Type::Entity do
     end
 
     it "serializes as json nicely" do
-      expect(person.as_json).to eq({ age: 18, role: { name: "admin" } }.deep_stringify_keys)
+      expect(person.as_json).to eq({ age: 18, role: { name: "admin", last_name: "admin" } }.deep_stringify_keys)
     end
 
     it "supports nil value properly when serializing" do
       person.role = nil
       expect(person.as_json).to eq({ age: 18, role: nil }.deep_stringify_keys)
     end
+
+    it "supports hash assigment" do
+      person.role = { name: "dev", last_name: "dev" }
+
+      expect(person.as_json).to eq({ age: 18, role: { name: "dev", last_name: "dev" } }.deep_stringify_keys)
+    end
   end
 
   context "constructing from json" do
     it "parses itself from json" do
-      person = EntityTest::Person.from_json({ age: 137, role: { name: "user" } })
+      person = EntityTest::Person.from_json({ age: 137, role: { name: "user", lastName: "user" } }.deep_stringify_keys)
 
       expect(person).to be_instance_of(EntityTest::Person)
       expect(person.age).to eq(137)
       expect(person.role).to be_instance_of(EntityTest::Role)
       expect(person.role.name).to eq("user")
+      expect(person.role.last_name).to eq("user")
     end
 
     it "accepts nil values" do
-      person = EntityTest::Person.from_json({ age: 137, role: nil })
+      person = EntityTest::Person.from_json({ age: 137, role: nil }.deep_stringify_keys)
 
       expect(person).to be_instance_of(EntityTest::Person)
       expect(person.age).to eq(137)
       expect(person.role).to eq(nil)
     end
-
-    it "converts attribute name by underscoring it" do
-      person = EntityTest::Person.from_json({ Age: 137, Role: { Name: "user" } })
-
-      expect(person).to be_instance_of(EntityTest::Person)
-      expect(person.age).to eq(137)
-      expect(person.role).to be_instance_of(EntityTest::Role)
-      expect(person.role.name).to eq("user")
-    end
   end
 
   context "constructing from ActionController::Parameters" do
     it "parses itself from json" do
-      person = EntityTest::Person.from_json(ActionController::Parameters.new({ age: 137, role: { name: "user" } }))
+      person = EntityTest::Person.from_json(ActionController::Parameters.new({ age: 137, role: { name: "user", lastName: "user" } }))
 
       expect(person).to be_instance_of(EntityTest::Person)
       expect(person.age).to eq(137)
       expect(person.role).to be_instance_of(EntityTest::Role)
       expect(person.role.name).to eq("user")
+      expect(person.role.last_name).to eq("user")
     end
   end
 end

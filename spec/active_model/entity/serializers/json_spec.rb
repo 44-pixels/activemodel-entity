@@ -38,7 +38,7 @@ RSpec.describe ActiveModel::Entity::Serializers::JSON do
         field_float: 1.37,
         field_integer: 138,
         field_string: "string",
-        field_time: Time.new(2024, 1, 1, 1, 3, 8),
+        field_time: Time.new(2024, 1, 1, 1, 3, 8).utc,
         field_role: { field_name: "nom" },
         field_roles: [{ field_name: "prenom" }],
         field_integers: [1, 3, 7]
@@ -79,7 +79,8 @@ RSpec.describe ActiveModel::Entity::Serializers::JSON do
         field_time: Time.new(2024, 1, 1, 1, 3, 8),
         field_role: OpenStruct.new({ field_name: "nom" }),
         field_roles: [OpenStruct.new({ field_name: "prenom" })],
-        field_integers: [1, 3, 7]
+        field_integers: [1, 3, 7],
+        field_not_mapped: "not_mapped"
       })
     end
 

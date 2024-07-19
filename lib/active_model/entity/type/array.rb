@@ -54,6 +54,13 @@ module ActiveModel
                             end
         end
 
+        def cast_json(value)
+          return nil if value.nil?
+          raise NotImplementedError unless value.is_a?(::Array)
+
+          value.map { |entry| element_type.cast_json(entry) }
+        end
+
         private
 
         def cast_value(value)

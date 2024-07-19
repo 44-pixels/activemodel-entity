@@ -8,17 +8,17 @@ module ActiveModel
         extend ActiveSupport::Concern
 
         def set_attribute_from_json(name, value)
-          @attributes[name] = @attributes[name].with_value_from_user(value)
+          @attributes[name] = @attributes[name].with_value_from_json(value)
         end
 
         # Class-level methods.
         module ClassMethods
-          def from_json(json, underscore: true)
+          def from_json(json)
             new.tap do |instance|
-              json.each do |key, value|
-                key = key.to_s.underscore if underscore
-                # FIXME: underscore is not passed down to nested parsers!
-                instance.set_attribute_from_json(key, value)
+              instance.attributes.each_key do |name|
+                field_name = name.camelize(:lower)
+
+                instance.set_attribute_from_json(name, json[field_name])
               end
             end
           end
