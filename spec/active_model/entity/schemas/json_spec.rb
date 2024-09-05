@@ -58,8 +58,8 @@ RSpec.describe ActiveModel::Entity::Schemas::JSON do
                    "fieldNullableNotRequiredRole" => { :$ref => "#/components/schemas/SchemasTest.Role", nullable: true },
                    "fieldRoles" => { items: { :$ref => "#/components/schemas/SchemasTest.Role" }, type: :array },
                    "fieldIntegers" => { items: { type: :number }, type: :array },
-                   "fieldNullableString" => { type: %i[string null] },
-                   "fieldNullableNotRequiredString" => { type: %i[string null] },
+                   "fieldNullableString" => { type: :string, nullable: true },
+                   "fieldNullableNotRequiredString" => { type: :string, nullable: true },
                    "fieldWithoutType" => { type: :object },
                    "fieldEnumString" => { type: :string, enum: %w[an enum] },
                    "fieldEnumInt" => { type: :number, enum: [1, 3, 7] } }

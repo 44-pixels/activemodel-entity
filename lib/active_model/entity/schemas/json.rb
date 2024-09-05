@@ -56,8 +56,7 @@ module ActiveModel
           end
 
           def make_schema_nullable!(options)
-            options[:type] = [options[:type], :null] if options[:type]
-            options[:nullable] = true if options[:$ref]
+            options[:nullable] = true
           end
 
           def append_description_if_available!(name, options)
