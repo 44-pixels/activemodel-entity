@@ -23,7 +23,7 @@ module ActiveModel
 
           def required_attributes
             presence_validators = validators.group_by(&:class)[ActiveModel::Validations::PresenceValidator].to_a
-            presence_validators = presence_validators.reject { _1.options[:allow_nil] }
+            presence_validators = presence_validators.reject { _1.options[:required] == false }
             presence_validators.flat_map(&:attributes).to_a
           end
 
