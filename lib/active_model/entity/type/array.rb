@@ -40,10 +40,16 @@ module ActiveModel
           raise NotImplementedError
         end
 
+        # Fallback for direct calls
         def serialize(value)
+          serialize_with_options(value)
+        end
+
+        # Seriaze Array by serializing each element with options
+        def serialize_with_options(value, options = {})
           return nil if value.nil?
 
-          value.map { element_type.serialize(_1) }
+          value.map { element_type.serialize_with_options(_1, options) }
         end
 
         def element_type
