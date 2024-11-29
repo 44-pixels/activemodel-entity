@@ -9,14 +9,11 @@ module SerializersTest
     attribute :field_name_upcase, :string
     attribute :field_name_with_options, :string
 
-    serialization :field_name_upcase, proc { _1.is_a?(Hash) ? _1[:field_name].upcase : _1.field_name.upcase }
-    serialization(
-      :field_name_with_options,
-      proc do |object_or_hash, options|
-        value = object_or_hash.is_a?(Hash) ? object_or_hash[:field_name] : object_or_hash
-        options[:hidden].present? ? "***" : value
-      end
-    )
+    serializes(:field_name_upcase) { _1.is_a?(Hash) ? _1[:field_name].upcase : _1.field_name.upcase }
+    serializes :field_name_with_options do |object_or_hash, options|
+      value = object_or_hash.is_a?(Hash) ? object_or_hash[:field_name] : object_or_hash
+      options[:hidden].present? ? "***" : value
+    end
   end
 
   class Person
@@ -36,7 +33,7 @@ module SerializersTest
     attribute :field_roles, :array, of: "SerializersTest::Role"
     attribute :field_integers, :array, of: :integer
 
-    serialization :field_static_string, proc { "static" }
+    serializes(:field_static_string) { "static" }
   end
 end
 

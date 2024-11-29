@@ -23,9 +23,9 @@ module ActiveModel
           #
           # Specifies custom serialization for attribute.
           # @param attribute [Symbol|String] The attribute to serialize.
-          # @param callable [Proc] The callable to use for serialization. Object or hash and options are passed as arguments.
-          def serialization(attribute, callable)
-            custom_serializers[attribute.to_s] = callable
+          # @param block [Proc] The block to use for serialization. Object or hash and options are passed as arguments.
+          def serializes(attribute, &block)
+            custom_serializers[attribute.to_s] = block
           end
 
           def fetch_field_value(object_or_hash, name)
@@ -48,11 +48,11 @@ module ActiveModel
 
               custom_serializer = custom_serializers[name]
 
-              value = if custom_serializer.present?
-                        custom_serializer.call(object_or_hash, entity_options)
-                      else
-                        fetch_field_value(object_or_hash, name)
-                      end
+              if custom_serializer.present?
+                custom_serializer.call(object_or_hash, entity_options)
+              else
+                fetch_field_value(object_or_hash, name)
+              end => value
 
               memo[json_name] = type.serialize_with_options(value, options)
             end
