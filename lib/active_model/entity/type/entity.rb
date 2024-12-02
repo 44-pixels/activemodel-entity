@@ -37,10 +37,16 @@ module ActiveModel
           raise NotImplementedError
         end
 
+        # Fallback for direct calls
         def serialize(value)
+          serialize_with_options(value)
+        end
+
+        # Serialize entity with options
+        def serialize_with_options(value, options = {})
           return nil if value.nil?
 
-          entity_type.represent(value)
+          entity_type.represent(value, options)
         end
 
         def entity_type

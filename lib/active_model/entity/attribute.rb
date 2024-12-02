@@ -1,9 +1,14 @@
 # frozen_string_literal: true
 
-# Patch for ActiveModel::Type::Value to support casting JSON values
+# Patch for ActiveModel::Type::Value
 ActiveModel::Type::Value.class_eval do
   # Add alias to `cast` method for casting JSON values in ActiveModel::Attribute::FromJSON class
   alias_method :cast_json, :cast
+
+  # Serialize value with options, for base ActiveModel::Type::* classes it will delegates to serialize
+  def serialize_with_options(value, _options = {})
+    serialize(value)
+  end
 end
 
 module ActiveModel
