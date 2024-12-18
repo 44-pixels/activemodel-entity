@@ -11,6 +11,7 @@ require_relative "entity/parsers/json"
 require_relative "entity/serializers/json"
 require_relative "entity/schemas/json"
 require_relative "entity/meta/descriptions"
+require_relative "entity/inspect"
 
 module ActiveModel
   # Main module providing all neccesary includes to bring missing functionality to ActiveModel instances.
@@ -25,6 +26,7 @@ module ActiveModel
       include ActiveModel::Entity::Serializers::JSON
       include ActiveModel::Entity::Schemas::JSON
       include ActiveModel::Entity::Meta::Descriptions
+      include ActiveModel::Entity::Inspect
     end
   end
 end
