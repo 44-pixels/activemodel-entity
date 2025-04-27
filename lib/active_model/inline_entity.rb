@@ -62,8 +62,10 @@ module ActiveModel
       case options[:type]
       when :entity
         parent_entity_klass.attribute name, :entity, class_name: nested_entity_klass.name
+        parent_entity_klass.validates name, nested_entity: true, **options[:validations]
       when :array
         parent_entity_klass.attribute name, :array, of: nested_entity_klass.name
+        parent_entity_klass.validates name, nested_entity: true, **options[:validations]
       end
     end
 

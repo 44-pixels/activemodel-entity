@@ -52,7 +52,7 @@ RSpec.describe ActiveModel::InlineEntity do
   end
 
   context "with validations" do
-    specify "is invalid without a required attribute (default presence: true)" do
+    it "is invalid without a required attribute (default presence: true)" do
       klass = described_class.define do
         title :string
       end
@@ -62,7 +62,7 @@ RSpec.describe ActiveModel::InlineEntity do
       expect(entity.errors[:title]).to include("can't be blank")
     end
 
-    specify "allows skipping presence when overridden" do
+    it "allows skipping presence when overridden" do
       klass = described_class.define do
         subtitle :string, presence: false
       end
@@ -71,7 +71,7 @@ RSpec.describe ActiveModel::InlineEntity do
       expect(entity).to be_valid
     end
 
-    specify "enforces custom numericality validations" do
+    it "enforces custom numericality validations" do
       klass = described_class.define do
         age :integer, numericality: { greater_than_or_equal_to: 18 }
       end
@@ -80,10 +80,44 @@ RSpec.describe ActiveModel::InlineEntity do
       expect(underage).not_to be_valid
       expect(underage.errors[:age]).to include("must be greater than or equal to 18")
     end
+
+    it "enforces nested_entity validations" do
+      klass = described_class.define do
+        user :entity do
+          name :string
+        end
+      end
+
+      entity = klass.new(user: { name: nil })
+      expect(entity).not_to be_valid
+      expect(entity.errors[:user]).to include("Error in nested entity #0 for name: [\"can't be blank\"]")
+    end
+
+    it "allows to override nested_entity validations" do
+      klass = described_class.define do
+        user :entity, nested_entity: false do
+          name :string
+        end
+      end
+
+      entity = klass.new(user: { name: nil })
+      expect(entity).to be_valid
+    end
+
+    it "allows custom validations on nested entities" do
+      klass = described_class.define do
+        user :entity, presence: { allow_nil: true } do
+          name :string
+        end
+      end
+
+      entity = klass.new(user: nil)
+      expect(entity).to be_valid
+    end
   end
 
   context "when passing a custom class name" do
-    specify "defines class under given namespace" do
+    it "defines class under given namespace" do
       Object.const_set("CustomPrefix", Module.new)
 
       klass = described_class.define("CustomPrefix::Order") do
@@ -95,7 +129,7 @@ RSpec.describe ActiveModel::InlineEntity do
       Object.send(:remove_const, "CustomPrefix")
     end
 
-    specify "defines class in global namespace when passing simple name" do
+    it "defines class in global namespace when passing simple name" do
       klass = described_class.define("Invoice") do
         number :string
       end
