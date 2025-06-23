@@ -10,4 +10,5 @@ gem "rspec", "~> 3.0"
 gem "rubocop", "~> 1.21"
 
 # Security
+gem "debug"
 gem "rexml", ">= 3.3.6"
