@@ -11,6 +11,7 @@ require_relative "entity/parsers/json"
 require_relative "entity/serializers/json"
 require_relative "entity/schemas/json"
 require_relative "entity/meta/descriptions"
+require_relative "entity/equality"
 require_relative "entity/inspect"
 require_relative "entity/validations/nested_entity_validator"
 require_relative "entity/validations/exclusive_presence_validator"
@@ -30,6 +31,7 @@ module ActiveModel
       include ActiveModel::Entity::Serializers::JSON
       include ActiveModel::Entity::Schemas::JSON
       include ActiveModel::Entity::Meta::Descriptions
+      include ActiveModel::Entity::Equality
       include ActiveModel::Entity::Inspect
       include ActiveModel::Entity::Validations
       include ActiveModel::Entity::Validations::ValidatesNested
