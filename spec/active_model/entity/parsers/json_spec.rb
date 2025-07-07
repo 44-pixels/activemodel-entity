@@ -74,6 +74,11 @@ RSpec.describe ActiveModel::Entity::Parsers::JSON do
         field_integers: [1, 3, 7]
       })
     end
+
+    it "converts ActionController::Parameters to hash" do
+      person = ParsersTest::Person.from_json(source)
+      expect(person.field_obj).to eq({ "x" => 1 })
+    end
   end
 
   context "parsing json" do
