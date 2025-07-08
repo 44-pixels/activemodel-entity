@@ -2,10 +2,14 @@
 
 # Patch for ActiveModel::Type::Value
 ActiveModel::Type::Value.class_eval do
-  # Add alias to `cast` method for casting JSON values in ActiveModel::Attribute::FromJSON class
-  alias_method :cast_json, :cast
+  # Add wrapper to `cast` method for casting JSON values in ActiveModel::Attribute::FromJSON class
+  def cast_json(value)
+    value = value.to_unsafe_h if value.is_a?(ActionController::Parameters)
 
-  # Serialize value with options, for base ActiveModel::Type::* classes it will delegates to serialize
+    cast(value)
+  end
+
+  # Serialize value with options, for base ActiveModel::Type::* classes it will call `serialize`
   def serialize_with_options(value, _options = {})
     serialize(value)
   end

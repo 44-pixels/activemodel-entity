@@ -7,7 +7,7 @@ module ActiveModel
       extend ActiveSupport::Concern
 
       def eql?(other)
-        attributes.eql?(other.attributes)
+        attributes.as_json.eql?(other.attributes.as_json)
       end
 
       def ==(other)
@@ -15,7 +15,7 @@ module ActiveModel
       end
 
       def hash
-        [self.class, *attributes.keys, *attributes.keys].hash
+        [self.class, *attributes.keys, *attributes.values].hash
       end
     end
   end
