@@ -14,11 +14,12 @@ module ActiveModel
         # Class-level methods.
         module ClassMethods
           def from_json(json)
+            unified_json = json.stringify_keys
             new.tap do |instance|
               instance.attributes.each_key do |name|
                 field_name = name.camelize(:lower)
 
-                instance.set_attribute_from_json(name, json[field_name])
+                instance.set_attribute_from_json(name, unified_json[field_name])
               end
             end
           end
