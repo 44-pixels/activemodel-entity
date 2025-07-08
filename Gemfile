@@ -9,6 +9,7 @@ gemspec
 gem "rexml", ">= 3.3.6"
 
 group :development, :test do
+  gem "activejob", ">= 7.0", require: false
   gem "debug"
   gem "rake", "~> 13.0"
   gem "rspec", "~> 3.0"

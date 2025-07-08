@@ -18,6 +18,9 @@ require_relative "entity/validations/exclusive_presence_validator"
 require_relative "entity/validations/validates_nested"
 require_relative "entity/pattern_matcheable"
 
+# Load Railtie if Rails is defined
+require_relative "entity/railtie" if defined?(Rails::Railtie)
+
 module ActiveModel
   # Main module providing all neccesary includes to bring missing functionality to ActiveModel instances.
   module Entity
