@@ -8,7 +8,8 @@ module ActiveModel
         extend ActiveSupport::Concern
 
         def set_attribute_from_json(name, value)
-          @attributes[name] = @attributes[name].with_value_from_json(value)
+          original_attribute_name = attribute_aliases.fetch(name, name)
+          @attributes[original_attribute_name] = @attributes[original_attribute_name].with_value_from_json(value)
         end
 
         # Class-level methods.
@@ -16,10 +17,10 @@ module ActiveModel
           def from_json(json)
             unified_json = json.stringify_keys
             new.tap do |instance|
-              instance.attributes.each_key do |name|
-                field_name = name.camelize(:lower)
+              instance.camelized_attributes_names.each do |name|
+                next unless unified_json.key?(name)
 
-                instance.set_attribute_from_json(name, unified_json[field_name])
+                instance.set_attribute_from_json(name, unified_json[name])
               end
             end
           end
