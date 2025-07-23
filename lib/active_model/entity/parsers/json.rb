@@ -20,9 +20,9 @@ module ActiveModel
           end
         end
 
-        def method_missing(method_name,  *args, &block)
+        def method_missing(method_name, *, &)
           if method_name == :assign_attributes_from_json
-            setters = self.attributes.keys.map do |name|
+            setters = attributes.keys.map do |name|
               <<~RUBY
                 #{name}_value = json[#{name.camelize(:lower).inspect}]
                 #{name}_value = json[#{name.camelize(:lower).to_sym.inspect}] if #{name}_value.nil?
@@ -41,10 +41,14 @@ module ActiveModel
             RUBY
 
             self.class.class_eval(code)
-            self.send(method_name, *args, &block)
+            send(method_name, *, &)
           else
             super
           end
+        end
+
+        def respond_to_missing?(method_name, include_private)
+          method_name == :assign_attributes_from_json || super
         end
       end
     end
