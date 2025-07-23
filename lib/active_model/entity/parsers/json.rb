@@ -8,21 +8,42 @@ module ActiveModel
         extend ActiveSupport::Concern
 
         def set_attribute_from_json(name, value)
-          original_attribute_name = attribute_aliases.fetch(name, name)
-          @attributes[original_attribute_name] = @attributes[original_attribute_name].with_value_from_json(value)
+          @attributes[name] = @attributes[name].with_value_from_json(value)
         end
 
         # Class-level methods.
         module ClassMethods
           def from_json(json)
-            unified_json = json.stringify_keys
             new.tap do |instance|
-              instance.camelized_attributes_names.each do |name|
-                next unless unified_json.key?(name)
-
-                instance.set_attribute_from_json(name, unified_json[name])
-              end
+              instance.assign_attributes_from_json(json)
             end
+          end
+        end
+
+        def method_missing(method_name,  *args, &block)
+          if method_name == :assign_attributes_from_json
+            setters = self.attributes.keys.map do |name|
+              <<~RUBY
+                #{name}_value = json[#{name.camelize(:lower).inspect}]
+                #{name}_value = json[#{name.camelize(:lower).to_sym.inspect}] if #{name}_value.nil?
+
+                self.set_attribute_from_json(
+                  #{name.inspect},
+                  #{name}_value
+                )
+              RUBY
+            end
+
+            code = <<~RUBY
+              def assign_attributes_from_json(json)
+                #{setters.join("\n")}
+              end
+            RUBY
+
+            self.class.class_eval(code)
+            self.send(method_name, *args, &block)
+          else
+            super
           end
         end
       end
