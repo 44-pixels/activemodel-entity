@@ -14,15 +14,41 @@ module ActiveModel
         # Class-level methods.
         module ClassMethods
           def from_json(json)
-            unified_json = json.stringify_keys
             new.tap do |instance|
-              instance.attributes.each_key do |name|
-                field_name = name.camelize(:lower)
-
-                instance.set_attribute_from_json(name, unified_json[field_name])
-              end
+              instance.assign_attributes_from_json(json)
             end
           end
+        end
+
+        def method_missing(method_name, *, &)
+          if method_name == :assign_attributes_from_json
+            setters = attributes.keys.map do |name|
+              <<~RUBY
+                #{name}_value = json[#{name.camelize(:lower).inspect}]
+                #{name}_value = json[#{name.camelize(:lower).to_sym.inspect}] if #{name}_value.nil?
+
+                self.set_attribute_from_json(
+                  #{name.inspect},
+                  #{name}_value
+                )
+              RUBY
+            end
+
+            code = <<~RUBY
+              def assign_attributes_from_json(json)
+                #{setters.join("\n")}
+              end
+            RUBY
+
+            self.class.class_eval(code)
+            send(method_name, *, &)
+          else
+            super
+          end
+        end
+
+        def respond_to_missing?(method_name, include_private)
+          method_name == :assign_attributes_from_json || super
         end
       end
     end
