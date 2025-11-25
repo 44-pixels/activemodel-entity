@@ -44,13 +44,29 @@ module ActiveModel
             end
           end
 
-          def json_schema_attribute_for(type)
+          def primitive_type_schema(type)
             return { type: :object } if type.type.nil?
             return { type: :number } if NUMBER_TYPES.include?(type.type)
             return { type: :string } if STRING_TYPES.include?(type.type)
             return { type: :boolean } if BOOLEAN_TYPES.include?(type.type)
-            return { "$ref": type.entity_type.json_schema_ref } if type.is_a?(Type::Entity)
-            return { items: json_schema_attribute_for(type.element_type), type: :array } if type.is_a?(Type::Array)
+
+            nil
+          end
+
+          def entity_schema_for(type, inline)
+            inline ? type.entity_type.as_json_schema(inline:) : { "$ref": type.entity_type.json_schema_ref }
+          end
+
+          def array_schema_for(type, inline)
+            { items: json_schema_attribute_for(type.element_type, inline:), type: :array }
+          end
+
+          def json_schema_attribute_for(type, inline: false)
+            schema = primitive_type_schema(type)
+            return schema if schema
+
+            return entity_schema_for(type, inline) if type.is_a?(Type::Entity)
+            return array_schema_for(type, inline) if type.is_a?(Type::Array)
 
             raise NotImplementedError
           end
@@ -68,14 +84,14 @@ module ActiveModel
             options[:enum] = values
           end
 
-          def as_json_schema
+          def as_json_schema(inline: false)
             type = :object
             description = meta_descriptions[nil].first
             required = required_attributes.map(&:name).map { _1.camelize(:lower) }
             nullable = nullable_attributes.map(&:name).index_by { _1.camelize(:lower) }
 
             attributes = attribute_types.transform_keys { _1.camelize(:lower) }
-            properties = attributes.transform_values { json_schema_attribute_for(_1) }
+            properties = attributes.transform_values { json_schema_attribute_for(_1, inline:) }
             enums = enum_attributes.transform_keys { _1.camelize(:lower) }
 
             properties.each do |name, options|
