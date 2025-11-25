@@ -70,4 +70,57 @@ RSpec.describe ActiveModel::Entity::Schemas::JSON do
       properties:
     })
   end
+
+  context "with inline: true" do
+    it "inlines nested entity schemas" do
+      schema = SchemasTest::Person.as_json_schema(inline: true)
+
+      expect(schema[:properties]["fieldRole"]).to eq({
+        type: :object,
+        required: [],
+        properties: { "fieldName" => { type: :string } }
+      })
+    end
+
+    it "inlines array of entity schemas" do
+      schema = SchemasTest::Person.as_json_schema(inline: true)
+
+      expect(schema[:properties]["fieldRoles"]).to eq({
+        type: :array,
+        items: {
+          type: :object,
+          required: [],
+          properties: { "fieldName" => { type: :string } }
+        }
+      })
+    end
+
+    it "preserves nullable flag on inlined entities" do
+      schema = SchemasTest::Person.as_json_schema(inline: true)
+
+      expect(schema[:properties]["fieldNullableRole"]).to eq({
+        type: :object,
+        required: [],
+        properties: { "fieldName" => { type: :string } },
+        nullable: true
+      })
+    end
+
+    it "keeps primitive types unchanged" do
+      schema = SchemasTest::Person.as_json_schema(inline: true)
+
+      expect(schema[:properties]["fieldString"]).to eq({ type: :string })
+      expect(schema[:properties]["fieldInteger"]).to eq({ type: :number })
+      expect(schema[:properties]["fieldBoolean"]).to eq({ type: :boolean })
+    end
+
+    it "keeps array of primitives unchanged" do
+      schema = SchemasTest::Person.as_json_schema(inline: true)
+
+      expect(schema[:properties]["fieldIntegers"]).to eq({
+        type: :array,
+        items: { type: :number }
+      })
+    end
+  end
 end
