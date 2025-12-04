@@ -72,6 +72,8 @@ module ActiveModel
           end
 
           def make_schema_nullable!(options)
+            options[:allOf] = ["$ref": options.delete(:$ref)] if options[:$ref].present?
+
             options[:nullable] = true
           end
 
