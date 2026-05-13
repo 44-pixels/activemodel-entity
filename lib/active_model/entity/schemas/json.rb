@@ -82,8 +82,9 @@ module ActiveModel
             options[:description] = meta_descriptions[key] if meta_descriptions.key?(key)
           end
 
-          def append_enum!(values, options)
-            options[:enum] = values
+          def append_enum!(values, options, type)
+            target = type.is_a?(Type::Array) ? options[:items] : options
+            target[:enum] = values
           end
 
           def as_json_schema(inline: false)
@@ -99,7 +100,7 @@ module ActiveModel
             properties.each do |name, options|
               make_schema_nullable!(options) if nullable.key?(name)
               append_description_if_available!(name, options)
-              append_enum!(enums[name], options) if enums.key?(name)
+              append_enum!(enums[name], options, attributes[name]) if enums.key?(name)
             end
 
             { type:, description:, required:, properties: }.compact
