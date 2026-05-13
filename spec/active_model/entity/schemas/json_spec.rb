@@ -29,6 +29,7 @@ module SchemasTest
     attribute :field_nullable_not_required_string, :string
     attribute :field_enum_string, :string
     attribute :field_enum_int, :integer
+    attribute :field_enum_string_array, :array, of: :string
 
     validates :field_boolean, presence: true
     validates :field_float, presence: true
@@ -38,6 +39,7 @@ module SchemasTest
     validates :field_nullable_not_required_role, presence: { allow_nil: true, required: false }
     validates :field_enum_string, inclusion: { in: %w[an enum] }
     validates :field_enum_int, inclusion: { in: [1, 3, 7] }
+    validates :field_enum_string_array, inclusion: { in: %w[an enum] }
   end
 end
 
@@ -62,7 +64,8 @@ RSpec.describe ActiveModel::Entity::Schemas::JSON do
                    "fieldNullableNotRequiredString" => { type: :string, nullable: true },
                    "fieldWithoutType" => { type: :object },
                    "fieldEnumString" => { type: :string, enum: %w[an enum] },
-                   "fieldEnumInt" => { type: :number, enum: [1, 3, 7] } }
+                   "fieldEnumInt" => { type: :number, enum: [1, 3, 7] },
+                   "fieldEnumStringArray" => { type: :array, items: { type: :string, enum: %w[an enum] } } }
 
     expect(schema).to eq({
       type: :object,
@@ -121,6 +124,37 @@ RSpec.describe ActiveModel::Entity::Schemas::JSON do
         type: :array,
         items: { type: :number }
       })
+    end
+
+    it "keeps enum on items for array of enums" do
+      schema = SchemasTest::Person.as_json_schema(inline: true)
+
+      expect(schema[:properties]["fieldEnumStringArray"]).to eq({
+        type: :array,
+        items: { type: :string, enum: %w[an enum] }
+      })
+    end
+  end
+
+  describe "validation of arrays of enums" do
+    let(:entity) { SchemasTest::Person.new(field_boolean: true, field_float: 1.0, field_nullable_string: "x") }
+
+    it "is valid when all elements are in the allowed set" do
+      entity.field_enum_string_array = %w[an enum]
+      entity.valid?
+      expect(entity.errors[:field_enum_string_array]).to be_empty
+    end
+
+    it "is invalid when any element is not in the allowed set" do
+      entity.field_enum_string_array = %w[an other]
+      entity.valid?
+      expect(entity.errors[:field_enum_string_array]).not_to be_empty
+    end
+
+    it "is valid when the array is empty" do
+      entity.field_enum_string_array = []
+      entity.valid?
+      expect(entity.errors[:field_enum_string_array]).to be_empty
     end
   end
 end
