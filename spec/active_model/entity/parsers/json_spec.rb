@@ -17,6 +17,16 @@ module ParsersTest
     attribute :field_positions, :array, of: "ParsersTest::Position"
   end
 
+  class Employee
+    include ActiveModel::Entity
+
+    attribute :field_name, :string
+  end
+
+  class Manager < Employee
+    attribute :field_department, :string
+  end
+
   class Person
     include ActiveModel::Entity
 
@@ -118,6 +128,17 @@ RSpec.describe ActiveModel::Entity::Parsers::JSON do
         field_roles: [{ field_name: "prenom", field_position: nil, field_positions: [{ field_name: "cpo" }] }],
         field_integers: [1, 3, 7]
       })
+    end
+  end
+
+  context "parsing into a subclass after the superclass has compiled its assigner" do
+    it "keeps subclass-only attributes" do
+      employee = ParsersTest::Employee.from_json({ "fieldName" => "emp" })
+      manager = ParsersTest::Manager.from_json({ "fieldName" => "mgr", "fieldDepartment" => "sales" })
+
+      expect(employee.field_name).to eq("emp")
+      expect(manager.field_name).to eq("mgr")
+      expect(manager.field_department).to eq("sales")
     end
   end
 

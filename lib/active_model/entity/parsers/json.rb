@@ -11,6 +11,10 @@ module ActiveModel
           @attributes[name] = @attributes[name].with_value_from_json(value)
         end
 
+        def assign_attributes_from_json(json)
+          instance_exec(json, &self.class.json_attributes_assigner)
+        end
+
         # Class-level methods.
         module ClassMethods
           def from_json(json)
@@ -18,16 +22,23 @@ module ActiveModel
               instance.assign_attributes_from_json(json)
             end
           end
-        end
 
-        def method_missing(method_name, *, &)
-          if method_name == :assign_attributes_from_json
-            setters = attributes.keys.map do |name|
+          # Compiled once per exact class (class-level ivars are not
+          # inherited), so an assigner compiled for a superclass can never
+          # shadow attributes that exist only on a subclass.
+          def json_attributes_assigner
+            @json_attributes_assigner ||= compile_json_attributes_assigner
+          end
+
+          private
+
+          def compile_json_attributes_assigner
+            setters = attribute_types.keys.map do |name|
               <<~RUBY
                 #{name}_value = json[#{name.camelize(:lower).inspect}]
                 #{name}_value = json[#{name.camelize(:lower).to_sym.inspect}] if #{name}_value.nil?
 
-                self.set_attribute_from_json(
+                set_attribute_from_json(
                   #{name.inspect},
                   #{name}_value
                 )
@@ -35,20 +46,13 @@ module ActiveModel
             end
 
             code = <<~RUBY
-              def assign_attributes_from_json(json)
+              ->(json) do
                 #{setters.join("\n")}
               end
             RUBY
 
-            self.class.class_eval(code)
-            send(method_name, *, &)
-          else
-            super
+            class_eval(code, __FILE__, __LINE__)
           end
-        end
-
-        def respond_to_missing?(method_name, include_private)
-          method_name == :assign_attributes_from_json || super
         end
       end
     end
