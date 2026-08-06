@@ -41,6 +41,30 @@ module SchemasTest
     validates :field_enum_int, inclusion: { in: [1, 3, 7] }
     validates :field_enum_string_array, inclusion: { in: %w[an enum] }
   end
+
+  class ReadOnlyPerson
+    include ActiveModel::Entity
+
+    attribute :field_string, :string
+    attribute :field_read_only_string, :string, read_only: true
+    attribute :field_role, :entity, class_name: "SchemasTest::Role"
+    attribute :field_read_only_role, :entity, class_name: "SchemasTest::Role", read_only: true
+    attribute :field_roles, :array, of: "SchemasTest::Role"
+    attribute :field_read_only_roles, :array, of: "SchemasTest::Role", read_only: true
+    attribute :field_read_only_nullable_role, :entity, class_name: "SchemasTest::Role", read_only: true
+
+    validates :field_read_only_nullable_role, presence: { allow_nil: true }
+  end
+
+  class ParentEntity
+    include ActiveModel::Entity
+
+    attribute :field_string, :string
+  end
+
+  class ChildEntity < ParentEntity
+    attribute :field_read_only_string, :string, read_only: true
+  end
 end
 
 RSpec.describe ActiveModel::Entity::Schemas::JSON do
@@ -133,6 +157,45 @@ RSpec.describe ActiveModel::Entity::Schemas::JSON do
         type: :array,
         items: { type: :string, enum: %w[an enum] }
       })
+    end
+  end
+
+  describe "read_only: true" do
+    let(:properties) { SchemasTest::ReadOnlyPerson.as_json_schema[:properties] }
+
+    it "leaves attributes without the option untouched" do
+      expect(properties["fieldString"]).to eq({ type: :string })
+      expect(properties["fieldRole"]).to eq({ :$ref => "#/components/schemas/SchemasTest.Role" })
+      expect(properties["fieldRoles"]).to eq({ items: { :$ref => "#/components/schemas/SchemasTest.Role" }, type: :array })
+    end
+
+    it "marks a primitive attribute as read only" do
+      expect(properties["fieldReadOnlyString"]).to eq({ type: :string, readOnly: true })
+    end
+
+    it "wraps an entity attribute into allOf, since a $ref sibling would be ignored" do
+      expect(properties["fieldReadOnlyRole"]).to eq({ allOf: [:$ref => "#/components/schemas/SchemasTest.Role"], readOnly: true })
+    end
+
+    it "marks an array attribute itself, not its items, as read only" do
+      expect(properties["fieldReadOnlyRoles"]).to eq({
+        items: { :$ref => "#/components/schemas/SchemasTest.Role" },
+        type: :array,
+        readOnly: true
+      })
+    end
+
+    it "combines with nullable without double wrapping" do
+      expect(properties["fieldReadOnlyNullableRole"]).to eq({
+        allOf: [:$ref => "#/components/schemas/SchemasTest.Role"],
+        nullable: true,
+        readOnly: true
+      })
+    end
+
+    it "does not leak a subclass declaration into its parent" do
+      expect(SchemasTest::ChildEntity.as_json_schema[:properties]["fieldReadOnlyString"]).to eq({ type: :string, readOnly: true })
+      expect(SchemasTest::ParentEntity.read_only_attributes).to be_empty
     end
   end
 
