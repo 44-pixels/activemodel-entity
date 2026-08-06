@@ -10,6 +10,7 @@ require_relative "entity/type"
 require_relative "entity/parsers/json"
 require_relative "entity/serializers/json"
 require_relative "entity/schemas/json"
+require_relative "entity/schemas/read_only"
 require_relative "entity/meta/descriptions"
 require_relative "entity/equality"
 require_relative "entity/inspect"
@@ -33,6 +34,7 @@ module ActiveModel
       include ActiveModel::Entity::Parsers::JSON
       include ActiveModel::Entity::Serializers::JSON
       include ActiveModel::Entity::Schemas::JSON
+      include ActiveModel::Entity::Schemas::ReadOnly
       include ActiveModel::Entity::Meta::Descriptions
       include ActiveModel::Entity::Equality
       include ActiveModel::Entity::Inspect
