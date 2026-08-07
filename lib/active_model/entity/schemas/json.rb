@@ -7,11 +7,22 @@ module ActiveModel
       module JSON
         extend ActiveSupport::Concern
 
+        included do
+          class_attribute :read_only_attributes, default: []
+        end
+
         # Class-level methods.
         module ClassMethods
           NUMBER_TYPES = %i[big_integer decimal float integer].freeze
           STRING_TYPES = %i[string immutable_string date datetime time].freeze
           BOOLEAN_TYPES = %i[boolean].freeze
+
+          # Intercepts calls to ::attribute method collecting read-only attribute names.
+          # The option is stripped, since ActiveModel::Type does not know about it.
+          def attribute(name, *, read_only: false, **)
+            self.read_only_attributes += [name.to_s] if read_only
+            super(name, *, **)
+          end
 
           def json_schema_id
             name.gsub("::", ".")
@@ -77,6 +88,12 @@ module ActiveModel
             options[:nullable] = true
           end
 
+          def make_schema_read_only!(options)
+            options[:allOf] = ["$ref": options.delete(:$ref)] if options[:$ref].present?
+
+            options[:readOnly] = true
+          end
+
           def append_description_if_available!(name, options)
             key = name.underscore.to_sym
             options[:description] = meta_descriptions[key] if meta_descriptions.key?(key)
@@ -92,6 +109,7 @@ module ActiveModel
             description = meta_descriptions[nil].first
             required = required_attributes.map(&:name).map { _1.camelize(:lower) }
             nullable = nullable_attributes.map(&:name).index_by { _1.camelize(:lower) }
+            read_only = read_only_attributes.index_by { _1.camelize(:lower) }
 
             attributes = attribute_types.transform_keys { _1.camelize(:lower) }
             properties = attributes.transform_values { json_schema_attribute_for(_1, inline:) }
@@ -99,6 +117,7 @@ module ActiveModel
 
             properties.each do |name, options|
               make_schema_nullable!(options) if nullable.key?(name)
+              make_schema_read_only!(options) if read_only.key?(name)
               append_description_if_available!(name, options)
               append_enum!(enums[name], options, attributes[name]) if enums.key?(name)
             end
