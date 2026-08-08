@@ -61,8 +61,12 @@ module ActiveModel
 
           # Default options for representing an entity.
           # Override this method to provide custom default options for Entity
+          #
+          # Frozen so that Ruby 3.4+ (opt_hash_freeze) hands back the same object every
+          # call instead of allocating one. Every nested entity calls this once, so a
+          # large payload was allocating a hash per nested object just to read :camelize.
           def default_represent_options
-            { camelize: true }
+            { camelize: true }.freeze
           end
 
           private
