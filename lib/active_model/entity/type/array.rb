@@ -49,7 +49,15 @@ module ActiveModel
         def serialize_with_options(value, options = {})
           return nil if value.nil?
 
-          value.map { element_type.serialize_with_options(_1, options) }
+          element = element_type
+
+          # An array of entities resolves the represent plan and options once for the
+          # whole collection instead of once per element. The check is deliberately on
+          # the exact class: a Type::Entity subclass may override serialize_with_options,
+          # and routing around it would silently change behaviour.
+          return element.entity_type.represent_all(value, options) if element.instance_of?(::ActiveModel::Entity::Type::Entity)
+
+          value.map { element.serialize_with_options(_1, options) }
         end
 
         def element_type

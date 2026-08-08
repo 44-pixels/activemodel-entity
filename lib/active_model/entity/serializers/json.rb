@@ -56,7 +56,25 @@ module ActiveModel
             # re-casting work +serialize+ would redo on every field. Anything else --
             # a Hash, an ActiveRecord model, an OpenStruct -- carries values this class
             # never cast, so it keeps the full +serialize+ path.
-            build_representation(object_or_hash, options, entity_options, object_or_hash.instance_of?(self))
+            build_representation(object_or_hash, options, entity_options,
+                                 object_or_hash.instance_of?(self), represent_plan(entity_options[:camelize]))
+          end
+
+          # Represents a whole collection in one pass. The resolved options, the custom
+          # serializer lookup and the compiled plan are the same for every element, so
+          # they are computed once here rather than once per element. +:array+ attributes
+          # of entities route through this, so nested collections get it automatically.
+          def represent_all(sources, options = {})
+            entity_options = options.empty? ? default_represent_options : default_represent_options.merge(options)
+            plan = represent_plan(entity_options[:camelize])
+            has_custom_serializers = custom_serializers.any?
+
+            sources.map do |source|
+              next nil if source.nil?
+
+              source = source.with_indifferent_access if has_custom_serializers && source.is_a?(Hash)
+              build_representation(source, options, entity_options, source.instance_of?(self), plan)
+            end
           end
 
           # Default options for representing an entity.
@@ -80,11 +98,11 @@ module ActiveModel
           # re-run once per attribute of every nested entity. +each+ with an explicit
           # memo is used over +each_with_object+, which allocates an extra object per
           # call -- once per nested entity, so it adds up on large payloads.
-          def build_representation(source, options, entity_options, pre_cast)
+          def build_representation(source, options, entity_options, pre_cast, plan)
             memo = {}
             from_hash = source.is_a?(Hash)
 
-            represent_plan(entity_options[:camelize]).each do |row|
+            plan.each do |row|
               json_name, name, sym, type, custom_serializer, cast_value_serializable = row
 
               value = if custom_serializer
