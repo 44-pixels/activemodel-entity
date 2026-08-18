@@ -51,33 +51,101 @@ module ActiveModel
             # up by string or symbol, so they keep getting an indifferent-access copy.
             object_or_hash = object_or_hash.with_indifferent_access if custom_serializers.any? && object_or_hash.is_a?(Hash)
 
-            represent_plan(entity_options[:camelize]).each_with_object({}) do |(json_name, name, type, custom_serializer), memo|
-              value = custom_serializer ? custom_serializer.call(object_or_hash, entity_options) : fetch_field_value(object_or_hash, name)
+            # Values read off one of our own instances were already cast by these exact
+            # types, so +serialize_cast_value+ is valid for them and skips the redundant
+            # re-casting work +serialize+ would redo on every field. Anything else --
+            # a Hash, an ActiveRecord model, an OpenStruct -- carries values this class
+            # never cast, so it keeps the full +serialize+ path.
+            build_representation(object_or_hash, options, entity_options,
+                                 object_or_hash.instance_of?(self), represent_plan(entity_options[:camelize]))
+          end
 
-              memo[json_name] = type.serialize_with_options(value, options)
+          # Represents a whole collection in one pass. The resolved options, the custom
+          # serializer lookup and the compiled plan are the same for every element, so
+          # they are computed once here rather than once per element. +:array+ attributes
+          # of entities route through this, so nested collections get it automatically.
+          def represent_all(sources, options = {})
+            entity_options = options.empty? ? default_represent_options : default_represent_options.merge(options)
+            plan = represent_plan(entity_options[:camelize])
+            has_custom_serializers = custom_serializers.any?
+
+            sources.map do |source|
+              next nil if source.nil?
+
+              source = source.with_indifferent_access if has_custom_serializers && source.is_a?(Hash)
+              build_representation(source, options, entity_options, source.instance_of?(self), plan)
             end
           end
 
           # Default options for representing an entity.
           # Override this method to provide custom default options for Entity
+          #
+          # Frozen so that Ruby 3.4+ (opt_hash_freeze) hands back the same object every
+          # call instead of allocating one. Every nested entity calls this once, so a
+          # large payload was allocating a hash per nested object just to read :camelize.
           def default_represent_options
-            { camelize: true }
+            { camelize: true }.freeze
           end
 
           private
 
-          # Compiled once per exact class (class-level ivars are not inherited) and
-          # per camelization mode: one [json_name, name, type, custom_serializer]
-          # tuple per attribute, so name camelization and serializer lookups happen
-          # once instead of on every +represent+ call.
+          # +pre_cast+ says whether the source's values already went through these types.
+          # +serialize_cast_value+ is a no-op for +nil+ on every compatible type, so no
+          # nil guard is needed here.
+          #
+          # This deliberately inlines +fetch_field_value+ rather than calling it: the
+          # Hash-vs-object test is constant for the whole call but would otherwise be
+          # re-run once per attribute of every nested entity. +each+ with an explicit
+          # memo is used over +each_with_object+, which allocates an extra object per
+          # call -- once per nested entity, so it adds up on large payloads.
+          def build_representation(source, options, entity_options, pre_cast, plan)
+            memo = {}
+            from_hash = source.is_a?(Hash)
+
+            plan.each do |row|
+              json_name, name, sym, type, custom_serializer, cast_value_serializable = row
+
+              value = if custom_serializer
+                        custom_serializer.call(source, entity_options)
+                      elsif from_hash
+                        # String key wins, matching +fetch_field_value+; the pre-interned
+                        # symbol is only consulted when the string key is absent.
+                        (found = source[name]).nil? ? source[sym] : found
+                      else
+                        source.send(sym)
+                      end
+
+              memo[json_name] = pre_cast && cast_value_serializable ? type.serialize_cast_value(value) : type.serialize_with_options(value, options)
+            end
+
+            memo
+          end
+
+          # Compiled once per exact class (class-level ivars are not inherited) and per
+          # camelization mode: one
+          # [json_name, name, sym, type, custom_serializer, cast_value_serializable]
+          # tuple per attribute, so name camelization, symbol interning, serializer
+          # lookups and the serialize_cast_value compatibility check happen once instead
+          # of on every +represent+ call.
           def represent_plan(camelize)
             plans = (@represent_plans ||= {})
 
             plans[camelize ? :camelized : :plain] ||= attribute_types.map do |name, type|
               json_name = camelize ? name.camelcase(:lower) : name
+              custom_serializer = custom_serializers[name]
 
-              [json_name, name, type, custom_serializers[name]]
+              [json_name, name, name.to_sym, type, custom_serializer,
+               !custom_serializer && cast_value_serializable?(type)]
             end
+          end
+
+          # Whether +type+ opted into ActiveModel's "this value was already cast by me"
+          # protocol. Resolved once at plan-compile time; +SerializeCastValue.serialize+
+          # answers the same question but re-derives it (behind a +rescue+) per value.
+          # Nested :entity/:array types are not compatible and keep recursing normally.
+          def cast_value_serializable?(type)
+            type.respond_to?(:itself_if_serialize_cast_value_compatible) &&
+              type.equal?(type.itself_if_serialize_cast_value_compatible)
           end
         end
       end

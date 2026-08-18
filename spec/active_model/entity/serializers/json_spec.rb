@@ -116,4 +116,31 @@ RSpec.describe ActiveModel::Entity::Serializers::JSON do
       })
     end
   end
+
+  context "representing a collection" do
+    it "represents every element, mixing entities, hashes and nils" do
+      json = SerializersTest::Role.represent_all(
+        [SerializersTest::Role.new(field_name: "nom"), nil, { field_name: "prenom" }], { hidden: true }
+      )
+
+      expect(json.map { _1&.deep_symbolize_keys }).to eq([
+        { fieldName: "nom", fieldNameUpcase: "NOM", fieldNameWithOptions: "***" },
+        nil,
+        { fieldName: "prenom", fieldNameUpcase: "PRENOM", fieldNameWithOptions: "***" }
+      ])
+    end
+
+    it "matches what represent produces element by element" do
+      sources = [SerializersTest::Role.new(field_name: "nom"), { field_name: "prenom" }]
+
+      expect(SerializersTest::Role.represent_all(sources, { hidden: true }))
+        .to eq(sources.map { SerializersTest::Role.represent(_1, { hidden: true }) })
+    end
+
+    it "passes options through and honours camelize: false" do
+      json = SerializersTest::Role.represent_all([{ field_name: "nom" }], { camelize: false })
+
+      expect(json).to eq([{ "field_name" => "nom", "field_name_upcase" => "NOM", "field_name_with_options" => "nom" }])
+    end
+  end
 end
