@@ -17,6 +17,7 @@ require_relative "entity/validations/nested_entity_validator"
 require_relative "entity/validations/exclusive_presence_validator"
 require_relative "entity/validations/validates_nested"
 require_relative "entity/pattern_matcheable"
+require_relative "entity/discriminator"
 
 # Load Railtie if Rails is defined
 require_relative "entity/railtie" if defined?(Rails::Railtie)
@@ -39,6 +40,7 @@ module ActiveModel
       include ActiveModel::Entity::Validations
       include ActiveModel::Entity::Validations::ValidatesNested
       include ActiveModel::Entity::PatternMatcheable
+      include ActiveModel::Entity::Discriminator
     end
   end
 end

@@ -18,7 +18,72 @@ If bundler is not being used to manage dependencies, install the gem by executin
 
 ## Usage
 
-TODO: Write usage instructions here
+### Discriminated unions
+
+A base entity can name a tag attribute and a closed mapping of tag to subclass, STI-style.
+Mapping values may be class names of classes defined later, or constants:
+
+```ruby
+class ThreadContext
+  include ActiveModel::Entity
+
+  discriminated_by :type, admin: "ThreadContext::Admin", whatsapp: "ThreadContext::Whatsapp"
+end
+
+class ThreadContext::Admin < ThreadContext; end
+
+class ThreadContext::Whatsapp < ThreadContext
+  attribute :phone_number_id, :string
+  attribute :wa_id, :string
+end
+```
+
+`discriminated_by` declares the `type` string attribute on the base unless it already exists. Each
+subclass gets its tag as the attribute's default, `represent` serializes it, and a subclass whose tag
+does not match its mapping entry is invalid.
+
+Building through the base dispatches on the tag (string or symbol key; `from_json` reads the
+camelized key like any other attribute); a missing or unknown tag raises an `ArgumentError`. Building
+a subclass directly works as before:
+
+```ruby
+ThreadContext.new(type: "whatsapp", wa_id: "1")          # => #<ThreadContext::Whatsapp ...>
+ThreadContext.from_json("type" => "admin")                # => #<ThreadContext::Admin ...>
+ThreadContext::Whatsapp.new(wa_id: "1").type              # => "whatsapp"
+ThreadContext.new(type: "sms")                            # ArgumentError: unknown type tag "sms"
+```
+
+Attributes typed with the base (`attribute :context, :entity, class_name: "ThreadContext"`,
+`attribute :contexts, :array, of: "ThreadContext"`) cast hashes to the matching subclass and keep
+subclass instances as they are.
+
+The base's JSON schema is a `oneOf` of the subclasses with an OpenAPI 3 `discriminator`; each
+subclass pins its tag as a required single-value enum:
+
+```ruby
+ThreadContext.as_json_schema
+# {
+#   oneOf: [{ "$ref": "#/components/schemas/ThreadContext.Admin" }, { "$ref": "#/components/schemas/ThreadContext.Whatsapp" }],
+#   discriminator: {
+#     propertyName: "type",
+#     mapping: { "admin" => "#/components/schemas/ThreadContext.Admin", "whatsapp" => "#/components/schemas/ThreadContext.Whatsapp" }
+#   }
+# }
+
+ThreadContext::Whatsapp.as_json_schema
+# {
+#   type: :object,
+#   required: ["type"],
+#   properties: {
+#     "type" => { type: :string, enum: ["whatsapp"] },
+#     "phoneNumberId" => { type: :string },
+#     "waId" => { type: :string }
+#   }
+# }
+```
+
+With `inline: true` the `oneOf` carries the subclass schemas themselves and the `discriminator` keeps
+only `propertyName`, since there are no refs for a `mapping` to point at.
 
 ## Development
 
